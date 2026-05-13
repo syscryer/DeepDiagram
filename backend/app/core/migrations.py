@@ -13,8 +13,7 @@ async def run_migrations(conn: AsyncConnection):
     # 1. Create migration tracking table if it doesn't exist
     await conn.execute(text("""
         CREATE TABLE IF NOT EXISTS schema_migrations (
-            id SERIAL PRIMARY KEY,
-            filename VARCHAR(255) UNIQUE NOT NULL,
+            filename VARCHAR(255) PRIMARY KEY,
             applied_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (now() at time zone 'utc')
         )
     """))
