@@ -6,6 +6,8 @@ from app.agents.graph import graph
 from app.core.database import get_session
 from sqlmodel.ext.asyncio.session import AsyncSession
 from app.services.chat import ChatService
+from app.core.llm import get_llm
+from app.core.message_content import content_to_text
 import json
 import re
 from typing import AsyncGenerator
@@ -500,7 +502,7 @@ async def event_generator(request: ChatRequest, db: AsyncSession) -> AsyncGenera
                 if event_type == "on_chat_model_stream":
                     chunk = data.get("chunk")
                     if chunk:
-                        content = chunk.content
+                        content = content_to_text(chunk.content)
                         if content:
                             full_response_content += content
 
@@ -559,8 +561,8 @@ async def event_generator(request: ChatRequest, db: AsyncSession) -> AsyncGenera
                                         })
                                         yield f"event: tool_end\ndata: {json.dumps({'output': final_code, 'session_id': session_id})}\n\n"
                             else:
-                                # For general agent, just stream as thought
-                                yield f"event: thought\ndata: {json.dumps({'content': content, 'session_id': session_id})}\n\n"
+                                # For general agent, stream plain response text instead of a thinking event
+                                yield f"event: message_chunk\ndata: {json.dumps({'content': content, 'session_id': session_id})}\n\n"
 
             # Finalize any remaining JSON content
             if selected_agent and selected_agent != "general":
@@ -716,25 +718,20 @@ class TestModelRequest(BaseModel):
 @router.post("/test-model")
 async def test_model_connection(request: TestModelRequest):
     """Test if a model configuration is valid by making a simple API call."""
-    from langchain_openai import ChatOpenAI
-
     try:
-        # Create a test LLM instance
-        llm = ChatOpenAI(
-            model=request.model_id,
+        llm = get_llm(
+            model_name=request.model_id,
             api_key=request.api_key,
             base_url=request.base_url,
-            timeout=15,
-            max_retries=1
+            temperature=0,
         )
 
-        # Make a simple test call
         response = await llm.ainvoke([HumanMessage(content="Hi, respond with just 'OK'.")])
 
         return {
             "success": True,
             "message": "Model connection successful",
-            "response": response.content[:100] if response.content else "OK"
+            "response": content_to_text(response.content)[:100] if response.content else "OK"
         }
     except Exception as e:
         error_msg = str(e)
@@ -742,7 +739,7 @@ async def test_model_connection(request: TestModelRequest):
         if "401" in error_msg or "Unauthorized" in error_msg.lower():
             error_msg = "Invalid API key - authentication failed"
         elif "404" in error_msg or "not found" in error_msg.lower():
-            error_msg = "Model not found - please check the model ID"
+            error_msg = f"Provider returned 404 - please check the base URL or model ID. Detail: {error_msg}"
         elif "Connection" in error_msg or "timeout" in error_msg.lower():
             error_msg = "Connection failed - please check the base URL"
         elif "Invalid URL" in error_msg:

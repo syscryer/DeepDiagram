@@ -4,6 +4,7 @@ from langgraph.graph import StateGraph, END
 from app.state.state import AgentState
 from app.core.config import settings
 from app.core.llm import get_llm, get_configured_llm
+from app.core.message_content import content_to_text
 import re
 
 async def router_node(state: AgentState):
@@ -158,7 +159,7 @@ async def router_node(state: AgentState):
     
     llm = get_configured_llm(state)
     response = await llm.ainvoke(msgs_to_invoke)
-    intent = response.content.strip().lower()
+    intent = content_to_text(response.content).strip().lower()
     
     print(f"DEBUG ROUTER | Last Agent: {last_active_agent} | Raw Intent: {intent}")
 

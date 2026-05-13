@@ -1,6 +1,7 @@
 from langchain_core.messages import SystemMessage, HumanMessage
 from app.state.state import AgentState
 from app.core.llm import get_configured_llm, get_thinking_instructions
+from app.core.message_content import content_to_text
 from app.data.template_syntax import (
     TEMPLATES,
     ALL_TEMPLATES,
@@ -173,7 +174,7 @@ async def select_template(llm, user_request: str) -> str:
     selection_message = HumanMessage(content=f"Select the best template for: {user_request}")
 
     response = await llm.ainvoke([selector_prompt, selection_message])
-    template_name = response.content.strip()
+    template_name = content_to_text(response.content).strip()
 
     # Validate template name
     if template_name in ALL_TEMPLATES:

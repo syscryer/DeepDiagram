@@ -599,6 +599,7 @@ export const ChatPanel = () => {
         setParsingStatus(null);
 
         let thoughtBuffer = "";
+        let messageBuffer = "";
         let toolArgsBuffer = "";
 
         // Create new AbortController
@@ -836,6 +837,13 @@ export const ChatPanel = () => {
                                     if (data.content) {
                                         thoughtBuffer += data.content;
                                         updateLastMessage(thoughtBuffer, true, 'running', eventSessionId, true);
+                                    }
+                                    break;
+
+                                case 'message_chunk':
+                                    if (data.content) {
+                                        messageBuffer += data.content;
+                                        updateLastMessage(messageBuffer, true, 'running', eventSessionId, true);
                                     }
                                     break;
 
