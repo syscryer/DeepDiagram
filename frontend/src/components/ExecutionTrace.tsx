@@ -64,7 +64,7 @@ const DesignConceptItem = ({ step }: { step: Step }) => {
                     {step.isStreaming && (
                         <span className="ml-2 px-1.5 py-0.5 text-[10px] bg-amber-100 text-amber-700 rounded border border-amber-200 flex items-center gap-1 inline-flex">
                             <Activity className="w-2.5 h-2.5 animate-pulse" />
-                            Thinking...
+                            Generating...
                         </span>
                     )}
                 </div>

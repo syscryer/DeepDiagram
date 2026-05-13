@@ -1372,13 +1372,13 @@ export const ChatPanel = () => {
                                         </div>
                                     </div>
                                 )}
-                                {isGenerating && (
+                                {isGenerating && !hasContent && (
                                     <div className={cn(
                                         "flex items-center space-x-2 py-1 animate-pulse",
                                         hasContent && "mt-2 pt-2 border-t border-slate-100/50"
                                     )}>
                                         <Loader2 className="w-3 h-3 animate-spin text-indigo-500" />
-                                        <span className="text-xs text-slate-400 font-medium">Thinking...</span>
+                                        <span className="text-xs text-slate-400 font-medium">生成中...</span>
                                     </div>
                                 )}
                                 {msg.images && msg.images.length > 0 && (

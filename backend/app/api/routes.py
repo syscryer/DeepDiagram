@@ -52,6 +52,18 @@ class StreamingTagParser:
         self.last_dc_len = 0
         self.last_code_len = 0
 
+    @staticmethod
+    def _strip_partial_closing_tag(content: str, tag_name: str) -> str:
+        """Remove a trailing partial closing tag that appears during streaming."""
+        if not content:
+            return content
+        closing_tag = f"</{tag_name}>"
+        for i in range(1, len(closing_tag)):
+            partial = closing_tag[:i]
+            if content.endswith(partial):
+                return content[:-len(partial)]
+        return content
+
     def feed(self, chunk: str) -> list:
         """Feed a chunk and return events based on current state."""
         self.buffer += chunk
@@ -93,6 +105,7 @@ class StreamingTagParser:
                 else:
                     # Still streaming design_concept
                     dc_content = self.buffer[content_start:].strip()
+                    dc_content = self._strip_partial_closing_tag(dc_content, "design_concept")
                     if len(dc_content) > self.last_dc_len:
                         new_content = dc_content[self.last_dc_len:]
                         self.last_dc_len = len(dc_content)
@@ -116,6 +129,7 @@ class StreamingTagParser:
                 else:
                     # Still streaming code
                     code_content = self.buffer[content_start:].strip()
+                    code_content = self._strip_partial_closing_tag(code_content, "code")
                     if len(code_content) > self.last_code_len:
                         new_content = code_content[self.last_code_len:]
                         self.last_code_len = len(code_content)
@@ -141,6 +155,7 @@ class StreamingTagParser:
                 content_start = dc_start_pos + len(dc_start_tag)
                 content_end = dc_end_pos if dc_end_pos != -1 else len(self.buffer)
                 dc_content = self.buffer[content_start:content_end].strip()
+                dc_content = self._strip_partial_closing_tag(dc_content, "design_concept")
                 if len(dc_content) > self.last_dc_len:
                     new_content = dc_content[self.last_dc_len:]
                     self.design_concept = dc_content
@@ -158,6 +173,7 @@ class StreamingTagParser:
                 content_start = code_start_pos + len(code_start_tag)
                 content_end = code_end_pos if code_end_pos != -1 else len(self.buffer)
                 code_content = self.buffer[content_start:content_end].strip()
+                code_content = self._strip_partial_closing_tag(code_content, "code")
                 if len(code_content) > self.last_code_len:
                     new_content = code_content[self.last_code_len:]
                     self.code = code_content
